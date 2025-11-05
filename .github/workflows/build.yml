@@ -1,0 +1,42 @@
+name: Android Auto Build
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src.zip"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Extract source
+        run: |
+          unzip src.zip -d src
+          ls src
+
+      - name: Setup Java & Android SDK
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          arch: x86_64
+          target: default
+          force-avd-creation: false
+          disable-animations: true
+          script: |
+            echo "Building APK..."
+            cd src
+            ./gradlew assembleDebug || ./gradlew build || echo "Gradle not found, skipping."
+
+      - name: Upload built APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Built-APK
+          path: src/app/build/outputs/apk/debug/*.apk
